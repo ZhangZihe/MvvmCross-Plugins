@@ -32,6 +32,21 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
 
         #region IMvxPictureChooserTask Members
 
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable,
+                                     Action assumeCancelled)
+        {
+            var intent = new Intent(Intent.ActionGetContent);
+            intent.SetType("image/*");
+            if (allowsEditing)
+            {
+                intent.PutExtra("crop", "circle");
+                intent.PutExtra("aspectX", 100);
+                intent.PutExtra("aspectY", 100);
+            }
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality,
+                                pictureAvailable, assumeCancelled);
+        }
+
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable,
                                      Action assumeCancelled)
         {
@@ -41,10 +56,35 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                                 pictureAvailable, assumeCancelled);
         }
 
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
+                                             Action assumeCancelled)
+        {
+            this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, allowsEditing, (stream, name) => pictureAvailable(stream), assumeCancelled);
+        }
+
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
                                              Action assumeCancelled)
         {
             this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
+                                Action assumeCancelled)
+        {
+            var intent = new Intent(MediaStore.ActionImageCapture);
+
+            _cachedUriLocation = GetNewImageUri();
+            intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation);
+            intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
+            intent.PutExtra("return-data", true);
+            if (allowsEditing)
+            {
+                intent.PutExtra("crop", "circle");
+                intent.PutExtra("aspectX", 100);
+                intent.PutExtra("aspectY", 100);
+            }
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromCamera, intent, maxPixelDimension, percentQuality,
+                                (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
         public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
@@ -61,11 +101,24 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                                 (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
+        public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            var task = new TaskCompletionSource<Stream>();
+            ChoosePictureFromLibrary(maxPixelDimension, percentQuality, allowsEditing, task.SetResult, () => task.SetResult(null));
+            return task.Task;
+        }
 
         public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality)
         {
             var task = new TaskCompletionSource<Stream>();
             ChoosePictureFromLibrary(maxPixelDimension, percentQuality, task.SetResult, () => task.SetResult(null));
+            return task.Task;
+        }
+
+        public Task<Stream> TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            var task = new TaskCompletionSource<Stream>();
+            TakePicture(maxPixelDimension, percentQuality, allowsEditing, task.SetResult, () => task.SetResult(null));
             return task.Task;
         }
 

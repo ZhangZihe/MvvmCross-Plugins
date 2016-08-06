@@ -43,6 +43,14 @@ namespace MvvmCross.Plugins.PictureChooser.iOS
             _picker.Canceled += Picker_Canceled;
         }
 
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing,  Action<Stream, string> pictureAvailable,
+                                     Action assumeCancelled)
+        {
+            _picker.SourceType = UIImagePickerControllerSourceType.PhotoLibrary;
+            _picker.AllowsEditing = true;
+            ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
+        }
+
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable,
                                      Action assumeCancelled)
         {
@@ -50,10 +58,24 @@ namespace MvvmCross.Plugins.PictureChooser.iOS
             ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
         }
 
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
+                                             Action assumeCancelled)
+        {
+            this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, allowsEditing, (stream, name) => pictureAvailable(stream), assumeCancelled);
+        }
+
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
                                              Action assumeCancelled)
         {
             this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
+                                Action assumeCancelled)
+        {
+            _picker.SourceType = UIImagePickerControllerSourceType.Camera;
+            _picker.AllowsEditing = allowsEditing;
+            ChoosePictureCommon(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
         public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
@@ -63,10 +85,24 @@ namespace MvvmCross.Plugins.PictureChooser.iOS
             ChoosePictureCommon(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
+        public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            var task = new TaskCompletionSource<Stream>();
+            ChoosePictureFromLibrary(maxPixelDimension, percentQuality, allowsEditing, task.SetResult, () => task.SetResult(null));
+            return task.Task;
+        }
+
         public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality)
         {
             var task = new TaskCompletionSource<Stream>();
             ChoosePictureFromLibrary(maxPixelDimension, percentQuality, task.SetResult, () => task.SetResult(null));
+            return task.Task;
+        }
+
+        public Task<Stream> TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            var task = new TaskCompletionSource<Stream>();
+            TakePicture(maxPixelDimension, percentQuality, allowsEditing, task.SetResult, () => task.SetResult(null));
             return task.Task;
         }
 

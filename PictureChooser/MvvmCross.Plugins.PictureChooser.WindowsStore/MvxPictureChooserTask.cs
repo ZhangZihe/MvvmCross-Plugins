@@ -148,6 +148,31 @@ namespace MvvmCross.Plugins.PictureChooser.WindowsStore
             return destinationStream;
         }
 
+		public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable, Action assumeCancelled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Stream> TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing)
+        {
+            throw new NotImplementedException();
+        }
+		
         /*
 
         #region IMvxCombinedPictureChooserTask Members
