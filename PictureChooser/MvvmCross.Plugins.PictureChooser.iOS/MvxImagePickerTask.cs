@@ -18,9 +18,7 @@ using UIKit;
 
 namespace MvvmCross.Plugins.PictureChooser.iOS
 {
-    public class MvxImagePickerTask
-        : MvxIosTask
-          , IMvxPictureChooserTask
+    public class MvxImagePickerTask : MvxIosTask, IMvxPictureChooserTask
     {
         private readonly UIImagePickerController _picker;
         private readonly IMvxIosModalHost _modalHost;
@@ -43,46 +41,50 @@ namespace MvvmCross.Plugins.PictureChooser.iOS
             _picker.Canceled += Picker_Canceled;
         }
 
-        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing,  Action<Stream, string> pictureAvailable,
-                                     Action assumeCancelled)
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing,  Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             _picker.SourceType = UIImagePickerControllerSourceType.PhotoLibrary;
             _picker.AllowsEditing = true;
             ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
         }
 
-        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable,
-                                     Action assumeCancelled)
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             _picker.SourceType = UIImagePickerControllerSourceType.PhotoLibrary;
             ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
         }
 
-        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
-                                             Action assumeCancelled)
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable, Action assumeCancelled)
         {
             this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, allowsEditing, (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
-        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
-                                             Action assumeCancelled)
+        public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable, Action assumeCancelled)
         {
             this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
-        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
-                                Action assumeCancelled)
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             _picker.SourceType = UIImagePickerControllerSourceType.Camera;
             _picker.AllowsEditing = allowsEditing;
-            ChoosePictureCommon(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
+            ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
         }
 
-        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
-                                Action assumeCancelled)
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            TakePicture(maxPixelDimension, percentQuality, allowsEditing, (stream, path) => pictureAvailable(stream), assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             _picker.SourceType = UIImagePickerControllerSourceType.Camera;
-            ChoosePictureCommon(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
+            ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            TakePicture(maxPixelDimension, percentQuality, (stream, path) => pictureAvailable(stream), assumeCancelled);
         }
 
         public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing)

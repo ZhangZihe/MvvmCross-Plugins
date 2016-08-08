@@ -151,5 +151,15 @@ namespace MvvmCross.Plugins.PictureChooser.WindowsPhone
         {
             throw new NotImplementedException();
         }
+		
+		public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable, Action assumeCancelled)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable, Action assumeCancelled)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

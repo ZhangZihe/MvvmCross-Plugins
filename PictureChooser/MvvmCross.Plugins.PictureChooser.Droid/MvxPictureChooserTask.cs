@@ -22,28 +22,30 @@ using Uri = Android.Net.Uri;
 
 namespace MvvmCross.Plugins.PictureChooser.Droid
 {
-    public class MvxPictureChooserTask
-        : MvxAndroidTask
-          , IMvxPictureChooserTask
+    public class MvxPictureChooserTask : MvxAndroidTask, IMvxPictureChooserTask
           
     {
         private Uri _cachedUriLocation;
         private RequestParameters _currentRequestParameters;
+        private const int RESULT_CAMERA_CROP_PATH_RESULT = 301;
 
         #region IMvxPictureChooserTask Members
 
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable,
                                      Action assumeCancelled)
         {
-            var intent = new Intent(Intent.ActionGetContent);
-            intent.SetType("image/*");
+            var intent = new Intent(Intent.ActionPick, MediaStore.Images.Media.ExternalContentUri);
+            //intent.SetType("image/*");
+
             if (allowsEditing)
             {
-                intent.PutExtra("crop", "circle");
+                intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
+                intent.PutExtra("crop", "true");
                 intent.PutExtra("aspectX", 100);
                 intent.PutExtra("aspectY", 100);
             }
-            ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality,
+
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality, allowsEditing,
                                 pictureAvailable, assumeCancelled);
         }
 
@@ -52,8 +54,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
         {
             var intent = new Intent(Intent.ActionGetContent);
             intent.SetType("image/*");
-            ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality,
-                                pictureAvailable, assumeCancelled);
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality, false, pictureAvailable, assumeCancelled);
         }
 
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
@@ -68,27 +69,24 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             this.ChoosePictureFromLibrary(maxPixelDimension, percentQuality, (stream, name) => pictureAvailable(stream), assumeCancelled);
         }
 
-        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable,
-                                Action assumeCancelled)
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             var intent = new Intent(MediaStore.ActionImageCapture);
 
-            _cachedUriLocation = GetNewImageUri();
-            intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation);
             intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
-            intent.PutExtra("return-data", true);
-            if (allowsEditing)
-            {
-                intent.PutExtra("crop", "circle");
-                intent.PutExtra("aspectX", 100);
-                intent.PutExtra("aspectY", 100);
-            }
-            ChoosePictureCommon(MvxIntentRequestCode.PickFromCamera, intent, maxPixelDimension, percentQuality,
-                                (stream, name) => pictureAvailable(stream), assumeCancelled);
+            //intent.PutExtra(MediaStore.Images.Media.InterfaceConsts.Orientation, 0);
+            intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
+            intent.PutExtra("return-data", false);
+
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromCamera, intent, maxPixelDimension, percentQuality, allowsEditing, pictureAvailable, assumeCancelled);
         }
 
-        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable,
-                                Action assumeCancelled)
+        public void TakePicture(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            TakePicture(maxPixelDimension, percentQuality, allowsEditing, (stream, path) => pictureAvailable(stream), assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             var intent = new Intent(MediaStore.ActionImageCapture);
 
@@ -97,8 +95,12 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
             intent.PutExtra("return-data", true);
 
-            ChoosePictureCommon(MvxIntentRequestCode.PickFromCamera, intent, maxPixelDimension, percentQuality,
-                                (stream, name) => pictureAvailable(stream), assumeCancelled);
+            ChoosePictureCommon(MvxIntentRequestCode.PickFromCamera, intent, maxPixelDimension, percentQuality, false, pictureAvailable, assumeCancelled);
+        }
+
+        public void TakePicture(int maxPixelDimension, int percentQuality, Action<Stream> pictureAvailable, Action assumeCancelled)
+        {
+            TakePicture(maxPixelDimension, percentQuality, (stream, path) => pictureAvailable(stream), assumeCancelled);
         }
 
         public Task<Stream> ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing)
@@ -148,13 +150,12 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
         }
 
         public void ChoosePictureCommon(MvxIntentRequestCode pickId, Intent intent, int maxPixelDimension,
-                                        int percentQuality, Action<Stream, string> pictureAvailable, Action assumeCancelled)
+                                        int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             if (_currentRequestParameters != null)
                 throw new MvxException("Cannot request a second picture while the first request is still pending");
 
-            _currentRequestParameters = new RequestParameters(maxPixelDimension, percentQuality, pictureAvailable,
-                                                              assumeCancelled);
+            _currentRequestParameters = new RequestParameters(maxPixelDimension, percentQuality, allowsEditing, pictureAvailable, assumeCancelled);
             StartActivityForResult((int) pickId, intent);
         }
 
@@ -164,12 +165,37 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
 
             Uri uri;
 
+            if (_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
+            {
+                Intent intent = new Intent("com.android.camera.action.CROP");
+                intent.SetDataAndType(_cachedUriLocation, "image/*");
+                intent.PutExtra("crop", "true");
+                intent.PutExtra("aspectX", 1);
+                intent.PutExtra("aspectY", 1);
+                intent.PutExtra("outputX", 700);
+                intent.PutExtra("outputY", 700);
+                intent.PutExtra("return-data", false);
+                intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
+                intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
+                //intent.PutExtra("noFaceDetection", true);
+                StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
+                return;
+            }
+
+            if (_currentRequestParameters.AllowsEditing)
+            {
+                uri = _cachedUriLocation;
+                ProcessPictureUri(result, uri);
+                return;
+            }
+
             switch ((MvxIntentRequestCode) result.RequestCode)
             {
                 case MvxIntentRequestCode.PickFromFile:
                     uri = result.Data?.Data;
                     break;
                 case MvxIntentRequestCode.PickFromCamera:
+                case (MvxIntentRequestCode)RESULT_CAMERA_CROP_PATH_RESULT:
                     uri = _cachedUriLocation;
                     break;
                 default:
@@ -347,11 +373,12 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
 
         private class RequestParameters
         {
-            public RequestParameters(int maxPixelDimension, int percentQuality, Action<Stream, string> pictureAvailable,
+            public RequestParameters(int maxPixelDimension, int percentQuality, bool allowsEditing, Action<Stream, string> pictureAvailable,
                                      Action assumeCancelled)
             {
                 PercentQuality = percentQuality;
                 MaxPixelDimension = maxPixelDimension;
+                AllowsEditing = allowsEditing;
                 AssumeCancelled = assumeCancelled;
                 PictureAvailable = pictureAvailable;
             }
@@ -360,6 +387,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             public Action AssumeCancelled { get; private set; }
             public int MaxPixelDimension { get; private set; }
             public int PercentQuality { get; private set; }
+            public bool AllowsEditing { get; private set; }
         }
 
         #endregion
