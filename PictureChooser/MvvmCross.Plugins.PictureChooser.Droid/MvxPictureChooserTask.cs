@@ -43,6 +43,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                 intent.PutExtra("crop", "true");
                 intent.PutExtra("aspectX", 100);
                 intent.PutExtra("aspectY", 100);
+                intent.PutExtra("return-data", false);
             }
 
             ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality, allowsEditing,
@@ -172,8 +173,8 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                 intent.PutExtra("crop", "true");
                 intent.PutExtra("aspectX", 1);
                 intent.PutExtra("aspectY", 1);
-                intent.PutExtra("outputX", 700);
-                intent.PutExtra("outputY", 700);
+                intent.PutExtra("outputX", 400);
+                intent.PutExtra("outputY", 400);
                 intent.PutExtra("return-data", false);
                 intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
                 intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
