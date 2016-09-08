@@ -165,22 +165,35 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             MvxTrace.Trace("ProcessMvxIntentResult started...");
 
             Uri uri;
-
-            if (_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
+            if (_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode != (MvxIntentRequestCode)RESULT_CAMERA_CROP_PATH_RESULT)
             {
                 Intent intent = new Intent("com.android.camera.action.CROP");
                 intent.SetDataAndType(_cachedUriLocation, "image/*");
+                intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
                 intent.PutExtra("crop", "true");
                 intent.PutExtra("aspectX", 1);
                 intent.PutExtra("aspectY", 1);
                 intent.PutExtra("outputX", 400);
                 intent.PutExtra("outputY", 400);
-                intent.PutExtra("return-data", false);
-                intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
-                intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
-                //intent.PutExtra("noFaceDetection", true);
-                StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
-                return;
+
+                if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
+                {
+                    intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
+                    intent.PutExtra("return-data", false);
+                    //intent.PutExtra("noFaceDetection", true);
+                    StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
+                    return;
+                }
+                else if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromFile)
+                {
+                    if (result.Data == null || result.Data.Data == null)
+                        return;
+                    _cachedUriLocation = result.Data.Data;
+                    intent.PutExtra("return-data", true);
+                    intent.PutExtra("noFaceDetection", true);
+                    StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
+                    return;
+                }
             }
 
             if (_currentRequestParameters.AllowsEditing)
@@ -190,7 +203,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                 return;
             }
 
-            switch ((MvxIntentRequestCode) result.RequestCode)
+            switch ((MvxIntentRequestCode)result.RequestCode)
             {
                 case MvxIntentRequestCode.PickFromFile:
                     uri = result.Data?.Data;
