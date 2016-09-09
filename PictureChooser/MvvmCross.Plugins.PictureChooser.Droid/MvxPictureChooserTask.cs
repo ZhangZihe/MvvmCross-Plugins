@@ -23,7 +23,7 @@ using Uri = Android.Net.Uri;
 namespace MvvmCross.Plugins.PictureChooser.Droid
 {
     public class MvxPictureChooserTask : MvxAndroidTask, IMvxPictureChooserTask
-          
+
     {
         private Uri _cachedUriLocation;
         private RequestParameters _currentRequestParameters;
@@ -35,17 +35,6 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                                      Action assumeCancelled)
         {
             var intent = new Intent(Intent.ActionPick, MediaStore.Images.Media.ExternalContentUri);
-            //intent.SetType("image/*");
-
-            if (allowsEditing)
-            {
-                intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
-                intent.PutExtra("crop", "true");
-                intent.PutExtra("aspectX", 100);
-                intent.PutExtra("aspectY", 100);
-                intent.PutExtra("return-data", false);
-            }
-
             ChoosePictureCommon(MvxIntentRequestCode.PickFromFile, intent, maxPixelDimension, percentQuality, allowsEditing,
                                 pictureAvailable, assumeCancelled);
         }
@@ -157,7 +146,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                 throw new MvxException("Cannot request a second picture while the first request is still pending");
 
             _currentRequestParameters = new RequestParameters(maxPixelDimension, percentQuality, allowsEditing, pictureAvailable, assumeCancelled);
-            StartActivityForResult((int) pickId, intent);
+            StartActivityForResult((int)pickId, intent);
         }
 
         protected override void ProcessMvxIntentResult(MvxIntentResultEventArgs result)
@@ -168,32 +157,24 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             if (_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode != (MvxIntentRequestCode)RESULT_CAMERA_CROP_PATH_RESULT)
             {
                 Intent intent = new Intent("com.android.camera.action.CROP");
-                intent.SetDataAndType(_cachedUriLocation, "image/*");
-                intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
+                if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
+                {
+                    intent.SetDataAndType(_cachedUriLocation, "image/*");
+                }
+                else
+                {
+                    intent.SetDataAndType(result.Data?.Data, "image/*");
+                }
+                intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
+                intent.PutExtra("return-data", false);
                 intent.PutExtra("crop", "true");
                 intent.PutExtra("aspectX", 1);
                 intent.PutExtra("aspectY", 1);
                 intent.PutExtra("outputX", 400);
                 intent.PutExtra("outputY", 400);
-
-                if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
-                {
-                    intent.PutExtra(MediaStore.ExtraOutput, _cachedUriLocation = GetNewImageUri());
-                    intent.PutExtra("return-data", false);
-                    //intent.PutExtra("noFaceDetection", true);
-                    StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
-                    return;
-                }
-                else if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromFile)
-                {
-                    if (result.Data == null || result.Data.Data == null)
-                        return;
-                    _cachedUriLocation = result.Data.Data;
-                    intent.PutExtra("return-data", true);
-                    intent.PutExtra("noFaceDetection", true);
-                    StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
-                    return;
-                }
+                intent.PutExtra("outputFormat", Bitmap.CompressFormat.Jpeg.ToString());
+                StartActivityForResult(RESULT_CAMERA_CROP_PATH_RESULT, intent);
+                return;
             }
 
             if (_currentRequestParameters.AllowsEditing)
@@ -288,8 +269,8 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
         {
             ContentResolver contentResolver = Mvx.Resolve<IMvxAndroidGlobals>().ApplicationContext.ContentResolver;
             var maxDimensionSize = GetMaximumDimension(contentResolver, uri);
-            var sampleSize = (int) Math.Ceiling((maxDimensionSize)/
-                                                ((double) _currentRequestParameters.MaxPixelDimension));
+            var sampleSize = (int)Math.Ceiling((maxDimensionSize) /
+                                                ((double)_currentRequestParameters.MaxPixelDimension));
             if (sampleSize < 1)
             {
                 // this shouldn't happen, but if it does... then trace the error and set sampleSize to 1
@@ -319,7 +300,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
         {
             using (var inputStream = contentResolver.OpenInputStream(uri))
             {
-                var optionsDecode = new BitmapFactory.Options {InSampleSize = sampleSize};
+                var optionsDecode = new BitmapFactory.Options { InSampleSize = sampleSize };
 
                 return BitmapFactory.DecodeStream(inputStream, null, optionsDecode);
             }
@@ -330,9 +311,9 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             using (var inputStream = contentResolver.OpenInputStream(uri))
             {
                 var optionsJustBounds = new BitmapFactory.Options
-                    {
-                        InJustDecodeBounds = true
-                    };
+                {
+                    InJustDecodeBounds = true
+                };
                 var metadataResult = BitmapFactory.DecodeStream(inputStream, null, optionsJustBounds);
                 var maxDimensionSize = Math.Max(optionsJustBounds.OutWidth, optionsJustBounds.OutHeight);
                 return maxDimensionSize;
