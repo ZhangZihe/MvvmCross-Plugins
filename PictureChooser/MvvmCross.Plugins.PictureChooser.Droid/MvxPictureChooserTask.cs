@@ -154,7 +154,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
             MvxTrace.Trace("ProcessMvxIntentResult started...");
 
             Uri uri;
-            if (_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode != (MvxIntentRequestCode)RESULT_CAMERA_CROP_PATH_RESULT)
+            if (result.ResultCode ==Result.Ok&&_currentRequestParameters.AllowsEditing && (MvxIntentRequestCode)result.RequestCode != (MvxIntentRequestCode)RESULT_CAMERA_CROP_PATH_RESULT)
             {
                 Intent intent = new Intent("com.android.camera.action.CROP");
                 if ((MvxIntentRequestCode)result.RequestCode == MvxIntentRequestCode.PickFromCamera)
