@@ -44,7 +44,7 @@ namespace MvvmCross.Plugins.PictureChooser.iOS
         public void ChoosePictureFromLibrary(int maxPixelDimension, int percentQuality, bool allowsEditing,  Action<Stream, string> pictureAvailable, Action assumeCancelled)
         {
             _picker.SourceType = UIImagePickerControllerSourceType.PhotoLibrary;
-            _picker.AllowsEditing = true;
+            _picker.AllowsEditing = allowsEditing;
             ChoosePictureCommon(maxPixelDimension, percentQuality, pictureAvailable, assumeCancelled);
         }
 
