@@ -238,7 +238,7 @@ namespace MvvmCross.Plugins.PictureChooser.Droid
                 MvxTrace.Trace("Loading InMemoryBitmap complete...");
                 responseSent = true;
                 MvxTrace.Trace("Sending pictureAvailable...");
-                _currentRequestParameters.PictureAvailable(memoryStream, System.IO.Path.GetFileNameWithoutExtension(uri.Path));
+                _currentRequestParameters.PictureAvailable(memoryStream,FileUtils.GetPath(Mvx.Resolve<IMvxAndroidGlobals>().ApplicationContext,uri));
                 MvxTrace.Trace("pictureAvailable completed...");
                 return;
             }
