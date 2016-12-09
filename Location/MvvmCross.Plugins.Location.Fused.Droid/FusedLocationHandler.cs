@@ -9,6 +9,7 @@ using MvvmCross.Platform.Exceptions;
 
 namespace MvvmCross.Plugins.Location.Fused.Droid
 {
+    [Preserve(AllMembers = true)]
 	public class FusedLocationHandler
 		: LocationCallback
 		, GoogleApiClient.IConnectionCallbacks
@@ -140,6 +141,14 @@ namespace MvvmCross.Plugins.Location.Fused.Droid
 			if (errorCode == ConnectionResult.Timeout) {
 				return MvxLocationErrorCode.Timeout;
 			}
+
+            if (errorCode == ConnectionResult.NetworkError) {
+                return MvxLocationErrorCode.Network;
+            }
+
+            if (errorCode == ConnectionResult.Canceled) {
+                return MvxLocationErrorCode.Canceled;
+            }
 
 			// TODO handle more error-codes?
 

@@ -13,6 +13,7 @@ using MvvmCross.Platform.Plugins;
 
 namespace MvvmCross.Plugins.DownloadCache.Droid
 {
+    [Preserve(AllMembers = true)]
     public class Plugin
         : IMvxConfigurablePlugin
     {
@@ -32,7 +33,9 @@ namespace MvvmCross.Plugins.DownloadCache.Droid
         public void Load()
         {
             Mvx.RegisterSingleton<IMvxHttpFileDownloader>(() => CreateHttpFileDownloader());
-            Mvx.RegisterSingleton<IMvxImageCache<Bitmap>>(() => CreateCache());
+
+            Mvx.RegisterSingleton<IMvxFileDownloadCache>(CreateFileDownloadCache);
+            Mvx.RegisterSingleton<IMvxImageCache<Bitmap>>(CreateCache);
             Mvx.RegisterType<IMvxImageHelper<Bitmap>, MvxDynamicImageHelper<Bitmap>>();
             Mvx.RegisterSingleton<IMvxLocalFileImageLoader<Bitmap>>(() => new MvxAndroidLocalFileImageLoader());
         }
@@ -43,14 +46,22 @@ namespace MvvmCross.Plugins.DownloadCache.Droid
             return new MvxHttpFileDownloader(configuration.MaxConcurrentDownloads);
         }
 
-        private MvxImageCache<Bitmap> CreateCache()
+        private IMvxFileDownloadCache CreateFileDownloadCache()
         {
             var configuration = _configuration ?? MvxDownloadCacheConfiguration.Default;
-
             var fileDownloadCache = new MvxFileDownloadCache(configuration.CacheName,
                                                              configuration.CacheFolderPath,
                                                              configuration.MaxFiles,
                                                              configuration.MaxFileAge);
+
+            return fileDownloadCache;
+        }
+
+        private MvxImageCache<Bitmap> CreateCache()
+        {
+            var configuration = _configuration ?? MvxDownloadCacheConfiguration.Default;
+
+            var fileDownloadCache = Mvx.Resolve<IMvxFileDownloadCache>();
             var fileCache = new MvxImageCache<Bitmap>(fileDownloadCache, configuration.MaxInMemoryFiles, configuration.MaxInMemoryBytes, configuration.DisposeOnRemoveFromCache);
             return fileCache;
         }

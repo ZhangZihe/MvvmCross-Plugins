@@ -17,7 +17,8 @@ using System.Threading.Tasks;
 
 namespace MvvmCross.Plugins.DownloadCache
 {
-    public class MvxFileDownloadCache
+    [Preserve(AllMembers = true)]
+	public class MvxFileDownloadCache
         : MvxLockableObject
         , IMvxFileDownloadCache
     {
@@ -227,6 +228,8 @@ namespace MvvmCross.Plugins.DownloadCache
                 var fileService = MvxFileStoreHelper.SafeGetFileStore();
                 if (fileService.Exists(nextFileToDelete))
                     fileService.DeleteFile(nextFileToDelete);
+
+                _toDeleteFiles.Remove(nextFileToDelete);
             }
             catch (Exception exception)
             {
